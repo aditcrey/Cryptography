@@ -1,87 +1,108 @@
-//Playfair cypher
-#include<bits/stdc++.h>
+//Playfair Cipher
+#include <iostream>
+#include <string>
 using namespace std;
-char mat[5][5];
-
-void findPositions(char first,char second, int &c1,int &r1,int &c2,int &r2){
-	for(int i=0;i<5;i++){
-		for(int j=0;j<5;j++){
-			if(mat[i][j]==first){
-				c1 = i;r1=j;
-			}
-			if(mat[i][j] ==second){
-				c2 = i;r2 = j;
-			}
+class playfair
+{
+public:
+    void doIt( string k, string t, bool ij, bool e )
+    {
+	createGrid( k, ij ); getTextReady( t, ij, e );
+	if( e ) doIt( 1 ); else doIt( -1 );
+	display();
+    }
+private:
+    void doIt( int dir )
+    {
+	int a, b, c, d; string ntxt;
+	for( string::const_iterator ti = _txt.begin(); ti != _txt.end(); ti++ )
+	{
+	    if( getCharPos( *ti++, a, b ) )
+		if( getCharPos( *ti, c, d ) )
+		{
+		    if( a == c )     { ntxt += getChar( a, b + dir ); ntxt += getChar( c, d + dir ); }
+		    else if( b == d ){ ntxt += getChar( a + dir, b ); ntxt += getChar( c + dir, d ); }
+		    else             { ntxt += getChar( c, b ); ntxt += getChar( a, d ); }
 		}
 	}
-}
-
-
-string decrypt(string str,string key){
-
-set<int> st;
-for(int i=0;i<key.length();i++){
-	st.insert(key[i]);
-}
-
-
-int len = key.length();
-int z = 0;
-
-int alpha = 0;
-
-for(int i=0;i<5;i++){
-  for(int j=0;j<5;j++){
-	if(z<len) {
-		mat[i][j] = key[z];
-		z++;
-	}else{
-		while(st.find('a' + alpha)!=st.end()) alpha++;
-		if(alpha==8) alpha++;  //when the character is i  //we print j in case of i/j 
-		mat[i][j] = 'a' + alpha;
-		alpha++;
+	_txt = ntxt;
+    }
+    void display()
+    {
+	cout << "\n\n OUTPUT:\n=========" << endl;
+	string::iterator si = _txt.begin(); int cnt = 0;
+	while( si != _txt.end() )
+	{
+	    cout << *si; si++; cout << *si; si++;
+	    if( ++cnt >= 26 ) cout << endl, cnt = 0;
 	}
-}
-}
-
-//printing matrix
-cout<<"The playfair matrix is: "<<endl;
-for(int i=0;i<5;i++){
-	for(int j=0;j<5;j++){
-		cout<<mat[i][j]<<" ";
-}
-cout<<endl;
-}
-
-
-//encrypting the str 
-int n = str.length();
-for(int i=0;i<n;i++){
-	char first,second;
-	if(str[i+1]=='\0') second = 'x';
-	first = str[i];
-	if(second!='x') second = str[i+1];
-	int c1,r1,c2,r2;
-	findPositions(first,second,c1,r1,c2,r2);
-	
-	//case 1: both first and second are equal
-	
-}
-
-return "aditya";
-
-
-}
-
-
-
-
-int main(){
-
-string key = "monarchy";
-string s ="BV";
-string encr = decrypt(s,key);
-
-
-return 0;
+	cout << endl << endl;
+    }
+    char getChar( int a, int b )
+    {
+	return _m[ (b + 5) % 5 ][ (a + 5) % 5 ];
+    }
+    bool getCharPos( char l, int &a, int &b )
+    {
+	for( int y = 0; y < 5; y++ )
+	    for( int x = 0; x < 5; x++ )
+		if( _m[y][x] == l )
+		{ a = x; b = y; return true; }
+ 
+	return false;
+    }
+    void getTextReady( string t, bool ij, bool e )
+    {
+	for( string::iterator si = t.begin(); si != t.end(); si++ )
+	{
+	    *si = toupper( *si ); if( *si < 65 || *si > 90 ) continue;
+	    if( *si == 'J' && ij ) *si = 'I';
+	    else if( *si == 'Q' && !ij ) continue;
+	    _txt += *si;
+	}
+	if( e )
+	{
+	    string ntxt = ""; size_t len = _txt.length();
+	    for( size_t x = 0; x < len; x += 2 )
+	    {
+		ntxt += _txt[x];
+		if( x + 1 < len )
+		{
+		    if( _txt[x] == _txt[x + 1] ) ntxt += 'X';
+		    ntxt += _txt[x + 1];
+		}
+	    }
+	    _txt = ntxt;
+	}
+	if( _txt.length() & 1 ) _txt += 'X';
+    }
+    void createGrid( string k, bool ij )
+    {
+	if( k.length() < 1 ) k = "KEYWORD"; 
+	k += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; string nk = "";
+	for( string::iterator si = k.begin(); si != k.end(); si++ )
+	{
+	    *si = toupper( *si ); if( *si < 65 || *si > 90 ) continue;
+	    if( ( *si == 'J' && ij ) || ( *si == 'Q' && !ij ) )continue;
+	    if( nk.find( *si ) == -1 ) nk += *si;
+	}
+	copy( nk.begin(), nk.end(), &_m[0][0] );
+    }
+    string _txt; char _m[5][5];
+};
+int main( int argc, char* argv[] )
+{
+    string key, i, txt; bool ij, e;
+    cout << "(E)ncode or (D)ecode? "; 
+    getline( cin, i ); e = ( i[0] == 'e' || i[0] == 'E' );
+    cout << "Enter a en/decryption key: "; 
+    getline( cin, key ); 
+    cout << "I <-> J (Y/N): "; 
+    getline( cin, i ); 
+    ij = ( i[0] == 'y' || i[0] == 'Y' );
+    cout << "Enter the text: "; 
+    getline( cin, txt ); 
+    playfair pf; 
+    pf.doIt( key, txt, ij, e ); 
+    return system("read -p 'Press Enter to continue...' var");
 }
